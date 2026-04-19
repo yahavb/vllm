@@ -378,8 +378,14 @@ class RayDistributedExecutor(Executor):
             "node_gpus has %d entry/entries, using driver_ip=%s",
             len(node_workers), len(node_gpus), driver_ip,
         )
+        _chosen_port = get_open_port()
         distributed_init_method = get_distributed_init_method(
-            driver_ip, get_open_port()
+            driver_ip, _chosen_port
+        )
+        logger.info(
+            "[PATCH-v2] distributed_init_method=%s  (driver_ip=%s port=%d)  "
+            "file=%s",
+            distributed_init_method, driver_ip, _chosen_port, __file__,
         )
 
         # Initialize the actual workers inside worker wrapper.
