@@ -358,7 +358,12 @@ class RayDistributedExecutor(Executor):
             "update_environment_variables", args=(self._get_env_vars_to_be_updated(),)
         )
 
-        if len(node_gpus) == 1:
+        # Use node_workers (keyed by node_id) instead of node_gpus to
+        # determine single-vs-multi node.  node_gpus can collapse to a
+        # single entry when accelerator IDs are empty (e.g. platforms
+        # that use custom Ray resources like neuron_cores), even though
+        # workers are actually spread across multiple nodes.
+        if len(node_workers) == 1:
             # in single node case, we don't need to get the IP address.
             # the loopback address is sufficient
             # NOTE: a node may have several IP addresses, one for each
@@ -368,6 +373,11 @@ class RayDistributedExecutor(Executor):
             # solves this issue, as it always works for communication inside
             # the node.
             driver_ip = "127.0.0.1"
+        logger.info(
+            "distributed_init_method: node_workers has %d node(s), "
+            "node_gpus has %d entry/entries, using driver_ip=%s",
+            len(node_workers), len(node_gpus), driver_ip,
+        )
         distributed_init_method = get_distributed_init_method(
             driver_ip, get_open_port()
         )

@@ -61,7 +61,20 @@ try:
                     "current platform %s does not support ray.",
                     vllm.platforms.current_platform.device_name,
                 )
-            gpu_ids = ray.get_runtime_context().get_accelerator_ids()[device_key]
+            accelerator_ids = (
+                ray.get_runtime_context().get_accelerator_ids()
+            )
+            gpu_ids = accelerator_ids.get(device_key, [])
+            if not gpu_ids:
+                logger.warning(
+                    "get_node_and_gpu_ids: No accelerator IDs found for "
+                    "device_key=%s (available keys: %s). This is expected "
+                    "for platforms that use custom Ray resources (e.g. "
+                    "neuron_cores). Node grouping will rely on node_id "
+                    "alone.",
+                    device_key,
+                    list(accelerator_ids.keys()),
+                )
             return node_id, gpu_ids
 
         def setup_device_if_necessary(self):
